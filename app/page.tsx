@@ -416,10 +416,7 @@ export default function Component() {
     <div className="min-h-screen bg-[#000025] text-white relative overflow-x-hidden">
       {/** ─────────── HERO SECTION ─────────── **/}
       <section className="relative z-10 text-center py-16 px-6 overflow-hidden">
-        {/*
-          (1) Hero‐only canvas sits behind everything in this section.
-          It’s positioned absolutely to fill the hero’s area.
-        */}
+        {/* (1) Hero-only canvas sits behind everything in this section */}
         <canvas
           id="heroCanvas"
           ref={canvasHeroRef}
@@ -428,38 +425,92 @@ export default function Component() {
 
         <div className="max-w-6xl mx-auto relative z-10">
           <div className="flex flex-col lg:flex-row items-center lg:justify-between justify-center">
-            <div className="lg:w-1/2 mb-0">
-              <div className="relative w-[576px] h-[576px] mx-auto">
-                {/* Moon image */}
+            {/* ─── Moon + Rocket Container ─── */}
+            <div className="w-full lg:w-1/2 mb-8 lg:mb-0">
+              <div
+                className="
+                  relative w-full
+                  lg:max-w-[576px]
+                  md:max-w-[480px]
+                  sm:max-w-[400px]
+                  max-w-[320px]
+                  aspect-square
+                  mx-auto
+                "
+              >
+                {/* Moon */}
                 <img
                   src="/moon.svg"
                   alt="Moon"
                   className="absolute inset-0 w-full h-full object-contain"
                 />
-                {/* Rocket image */}
-                <div className="absolute inset-0 flex items-center justify-center">
+
+                {/* Rocket */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <img
                     src="/rocket.png"
                     alt="Rocket"
-                    className="w-64 h-64 object-contain animate-bounce-slow"
-                    style={{ animationDuration: "6s" }}
+                    className="
+                      w-1/2
+                      sm:w-2/5
+                      md:w-1/3
+                      lg:w-64
+                      h-auto
+                      object-contain
+                      animate-bounce-slow
+                    "
+                    style={{ animationDuration: '6s' }}
                   />
                 </div>
               </div>
             </div>
 
+            {/* ─── Text & Buttons ─── */}
             <div className="w-full lg:w-1/2 flex flex-col items-center lg:items-start">
-              <h1 className="text-5xl lg:text-6xl font-bold mb-6 leading-tight font-['Space_Grotesk'] text-center lg:text-left">
+              <h1
+                className="
+                  text-3xl
+                  sm:text-4xl
+                  md:text-5xl
+                  lg:text-6xl
+                  font-bold mb-6 leading-tight font-['Space_Grotesk']
+                  text-center lg:text-left
+                "
+              >
                 Memecoins Express
                 <br />
                 Way to the Moon
               </h1>
-              <p className="text-xl text-white/80 mb-8 max-w-md text-center lg:text-left mx-auto lg:mx-0">
+
+              <p
+                className="
+                  text-base
+                  sm:text-lg
+                  md:text-xl
+                  lg:text-xl
+                  text-white/80 mb-8 max-w-md
+                  text-center lg:text-left mx-auto lg:mx-0
+                "
+              >
                 Turn your meme into a Supra sensation in 30 seconds, no code, no hassle.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
+
+              <div className="flex flex-col sm:flex-row gap-4 items-center">
                 <Button
-                  className="text-white w-[150px] h-[40px] rounded-[12px] shadow-[inset_0px_2px_2px_0px_#FFFFFF66] text-sm hover:brightness-110 hover:animate-gradient transition-all duration-300"
+                  className="
+                    text-white
+                    w-24
+                    sm:w-32
+                    md:w-[140px]
+                    lg:w-[150px]
+                    h-8
+                    md:h-[36px]
+                    lg:h-[40px]
+                    rounded-[12px]
+                    shadow-[inset_0px_2px_2px_0px_#FFFFFF66]
+                    text-xs sm:text-sm
+                    hover:brightness-110 hover:animate-gradient transition-all duration-300
+                  "
                   style={{
                     backgroundImage:
                       "linear-gradient(96.13deg, #A130E0 -15.21%, #19C0F4 98.39%)",
@@ -469,9 +520,22 @@ export default function Component() {
                 >
                   Create Coin
                 </Button>
+
                 <Button
                   variant="outline"
-                  className="border-[#19c0f4] text-[#19c0f4] bg-transparent hover:bg-[#19C0F4] hover:text-white w-[155px] h-[40px] rounded-[12px] border text-sm transition-colors duration-300"
+                  className="
+                    border-[#19c0f4] text-[#19c0f4] bg-transparent
+                    w-24
+                    sm:w-32
+                    md:w-[140px]
+                    lg:w-[155px]
+                    h-8
+                    md:h-[36px]
+                    lg:h-[40px]
+                    rounded-[12px]
+                    text-xs sm:text-sm
+                    hover:bg-[#19C0F4] hover:text-white transition-colors duration-300
+                  "
                 >
                   How it works?
                 </Button>
