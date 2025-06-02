@@ -285,16 +285,11 @@ export default function Component() {
                 <Button
                   className="
                     text-white
-                    w-24
-                    sm:w-32
-                    md:w-[140px]
-                    lg:w-[150px]
-                    h-8
-                    md:h-[36px]
-                    lg:h-[40px]
+                    w-[150px]
+                    h-[40px]
                     rounded-[12px]
                     shadow-[inset_0px_2px_2px_0px_#FFFFFF66]
-                    text-xs sm:text-sm
+                    text-sm
                     hover:brightness-110 hover:animate-gradient transition-all duration-300
                   "
                   style={{
@@ -310,16 +305,13 @@ export default function Component() {
                 <Button
                   variant="outline"
                   className="
-                    border-[#19c0f4] text-[#19c0f4] bg-transparent
-                    w-24
-                    sm:w-32
-                    md:w-[140px]
-                    lg:w-[155px]
-                    h-8
-                    md:h-[36px]
-                    lg:h-[40px]
+                    border-[#19c0f4]
+                    text-[#19c0f4]
+                    bg-transparent
+                    w-[150px]
+                    h-[40px]
                     rounded-[12px]
-                    text-xs sm:text-sm
+                    text-sm
                     hover:bg-[#19C0F4] hover:text-white transition-colors duration-300
                   "
                 >

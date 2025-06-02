@@ -5,25 +5,20 @@ import { X, Send } from "lucide-react";
 
 export default function SiteNavbar() {
   return (
-    <header className="z-20 flex items-center justify-between px-6 py-4 bg-[#132043] max-[500px]:justify-center max-[500px]:gap-4">
-      {/* ─── LEFT SIDE ─── */}
+    <header className="z-20 flex items-center justify-between px-6 py-4 bg-[#132043] max-[240px]:flex-col max-[240px]:gap-2 max-[240px]:items-center">
+      {/* ─── LEFT SIDE (Logo) ─── */}
       <div className="flex items-center gap-4">
-        {/*
-          Logo & text:
-          - Hidden at <= 450px
-          - Visible at 451px+
-          */}
-        <div className="flex items-center gap-2 max-[450px]:hidden">
+        <div className="flex items-center gap-2">
+          {/* Circle always visible */}
           <div className="w-8 h-8 bg-gradient-to-r from-[#ffbb69] to-[#fac031] rounded-full flex items-center justify-center">
             <span className="text-[#000025] font-bold text-sm">M</span>
           </div>
-          <span className="text-xl font-bold text-white">moonexpress.fun</span>
+          <span className="text-xl font-bold text-white max-[400px]:hidden">
+            moonexpress.fun
+          </span>
         </div>
 
-        {/*
-          (Optional) Nav links, still hidden below 768px:
-          Change or remove if you don’t want them at all.
-        */}
+        {/* (Optional) Nav links, still hidden below 768px */}
         <nav className="hidden md:flex items-center gap-6">
           <a href="#" className="text-white/80 hover:text-white">
             How it works?
@@ -37,13 +32,9 @@ export default function SiteNavbar() {
         </nav>
       </div>
 
-      {/* ─── RIGHT SIDE ─── */}
+      {/* ─── RIGHT SIDE (Icons + Connect Wallet) ─── */}
       <div className="flex items-center gap-4">
-        {/*
-          Icon buttons:
-          - Visible above 500px (i.e. hide at <= 500px)
-          - Use `max-[500px]:hidden` to hide when width ≤ 500px
-        */}
+        {/* Icon buttons hidden at ≤500px */}
         <div className="flex space-x-0 max-[500px]:hidden">
           <Button variant="ghost" size="icon" className="text-[#19c0f4]">
             <Send className="w-6 h-6" />
@@ -53,11 +44,12 @@ export default function SiteNavbar() {
           </Button>
         </div>
 
-        {/* Connect Wallet stays visible at all sizes */}
+        {/* Connect Wallet (always visible) */}
         <Button
           className="
+            text-white
             w-[144px] h-[40px] rounded-[12px] shadow-[inset_0px_2px_2px_0px_#FFFFFF66]
-            font-bold text-[14px] text-white
+            font-bold text-[14px]
             hover:brightness-110 hover:animate-gradient transition-all duration-300
           "
           style={{
