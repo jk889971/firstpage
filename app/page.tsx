@@ -1,13 +1,20 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Search } from "lucide-react"
 
+// (Helper timer, unchanged)
 function CountdownTimer({ initialTime }: { initialTime: number }) {
   const [timeLeft, setTimeLeft] = useState(initialTime)
 
@@ -25,7 +32,9 @@ function CountdownTimer({ initialTime }: { initialTime: number }) {
     const hours = Math.floor(seconds / 3600)
     const minutes = Math.floor((seconds % 3600) / 60)
     const secs = seconds % 60
-    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}:${secs}`
+    return `${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}:${secs}`
   }
 
   if (timeLeft <= 0) {
@@ -36,43 +45,326 @@ function CountdownTimer({ initialTime }: { initialTime: number }) {
 }
 
 export default function Component() {
+  // ── (A) Two refs: one for hero, one for the rest of the page ──
+  const canvasHeroRef = useRef<HTMLCanvasElement | null>(null)
+  const canvasBodyRef = useRef<HTMLCanvasElement | null>(null)
+
   const [searchQuery, setSearchQuery] = useState("")
 
-  // Generate stable star positions that don't change on re-render
-  const stableStars = useMemo(() => {
-    return Array.from({ length: 50 }).map(() => ({
-      left: `${Math.random() * 100}%`,
-      top: `${Math.random() * 100}%`,
-      delay: `${Math.random() * 3}s`,
-    }))
-  }, [])
+  // ── (B) First effect: animate “hero” particles ──
+  useEffect(() => {
+    const canvas = canvasHeroRef.current
+    if (!canvas) {
+      console.error("Hero canvas not found!")
+      return
+    }
+    const ctx = canvas.getContext("2d")
+    if (!ctx) {
+      console.error("Could not get 2D context for hero!")
+      return
+    }
 
-  // Generate moving twinkling stars for hero section
-  const movingStars = useMemo(() => {
-    return Array.from({ length: 150 }).map((_, i) => {
-      const size = Math.floor(Math.random() * 3) + 1 // 1-3px
-      const left = Math.random() * 100 // 0-100vw
-      const animationDelay = (Math.floor(Math.random() * 100) + 1) / 5 / size - 1000 // delay calculation
-      const animationDuration = (Math.floor(Math.random() * 1800) + 200) / 5 / size // duration calculation
-      const twinkleDelay = (Math.floor(Math.random() * 100) + 1) / 10 - 50 // twinkle delay
-      const twinkleDuration = (Math.floor(Math.random() * 450) + 50) / 10 // twinkle duration
-      const red = Math.floor(Math.random() * 56) + 200 // 200-255
-      const green = Math.floor(Math.random() * 106) + 150 // 150-255
-      const blue = Math.floor(Math.random() * 156) + 100 // 100-255
-      const alpha = (Math.floor(Math.random() * 4) + 7) / 10 // 0.7-1.0
+    // You can tweak these values for hero vs body:
+    const heroParticleColor = "rgba(255,255,255,0.6)"  // e.g. bright white
+    const heroParticleRadius = 2.0
 
-      return {
-        id: i,
-        size,
-        left: `${left}%`,
-        animationDelay: `${animationDelay}s`,
-        animationDuration: `${animationDuration}s`,
-        twinkleDelay: `${twinkleDelay}s`,
-        twinkleDuration: `${twinkleDuration}s`,
-        backgroundColor: `rgba(${red}, ${green}, ${blue}, ${alpha})`,
+    let particles: HeroParticle[] = []
+    const mouse = { x: undefined as number | undefined, y: undefined as number | undefined, radius: 80 }
+
+    // Mouse events (identical shape, but separate closure from body)
+    function handleMouseMoveHero(e: MouseEvent) {
+      mouse.x = e.clientX
+      mouse.y = e.clientY
+    }
+    function handleMouseOutHero() {
+      mouse.x = undefined
+      mouse.y = undefined
+    }
+    window.addEventListener("mousemove", handleMouseMoveHero)
+    window.addEventListener("mouseout", handleMouseOutHero)
+
+    // A small Particle class for the hero. You could give a different density/speed than the body.
+    class HeroParticle {
+      x: number
+      y: number
+      baseX: number
+      baseY: number
+      density: number
+      size: number
+      color: string
+      driftVx: number
+      driftVy: number
+      vx: number
+      vy: number
+
+      constructor(x: number, y: number) {
+        this.x = x
+        this.y = y
+        this.baseX = x
+        this.baseY = y
+        this.density = Math.random() * 10 + 3    // smaller density range
+        this.size = heroParticleRadius
+        this.color = heroParticleColor
+        this.driftVx = (Math.random() - 0.5) * 0.1
+        this.driftVy = (Math.random() - 0.5) * 0.1
+        this.vx = this.driftVx
+        this.vy = this.driftVy
       }
-    })
-  }, [])
+
+      draw() {
+        ctx.fillStyle = this.color
+        ctx.beginPath()
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2)
+        ctx.closePath()
+        ctx.fill()
+      }
+
+      update() {
+        // Drift “base” point
+        this.baseX += this.driftVx
+        this.baseY += this.driftVy
+
+        // Bounce at edges of the hero canvas
+        if (this.baseX <= 0 || this.baseX >= canvas.width) {
+          this.driftVx *= -1
+          this.baseX += this.driftVx * 2
+        }
+        if (this.baseY <= 0 || this.baseY >= canvas.height) {
+          this.driftVy *= -1
+          this.baseY += this.driftVy * 2
+        }
+
+        // Mouse repulsion (hero-specific radius)
+        let repX = 0
+        let repY = 0
+        const isMouseActiveHero = mouse.x !== undefined && mouse.y !== undefined
+        if (isMouseActiveHero) {
+          const dx = mouse.x! - this.x
+          const dy = mouse.y! - this.y
+          const distance = Math.sqrt(dx * dx + dy * dy)
+          if (distance < mouse.radius) {
+            const force = (mouse.radius - distance) / mouse.radius
+            const angle = Math.atan2(dy, dx)
+            repX = -Math.cos(angle) * force * this.density * 0.4
+            repY = -Math.sin(angle) * force * this.density * 0.4
+          }
+        }
+
+        const returnSpeed = 0.05
+        const returnX = (this.baseX - this.x) * returnSpeed
+        const returnY = (this.baseY - this.y) * returnSpeed
+
+        this.vx = returnX + repX + this.driftVx
+        this.vy = returnY + repY + this.driftVy
+
+        this.x += this.vx
+        this.y += this.vy
+
+        // Clamp to hero canvas
+        this.x = Math.max(this.size, Math.min(canvas.width - this.size, this.x))
+        this.y = Math.max(this.size, Math.min(canvas.height - this.size, this.y))
+      }
+    }
+
+    function initHeroParticles() {
+      particles = []
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+      const count = Math.floor((window.innerWidth * window.innerHeight) / 8000) // adjust density
+      for (let i = 0; i < count; i++) {
+        const x = Math.random() * canvas.width
+        const y = Math.random() * canvas.height
+        particles.push(new HeroParticle(x, y))
+      }
+    }
+
+    function animateHeroParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      for (const p of particles) {
+        p.update()
+        p.draw()
+      }
+      requestAnimationFrame(animateHeroParticles)
+    }
+
+    let resizeTimeoutHero: NodeJS.Timeout
+    function handleResizeHero() {
+      clearTimeout(resizeTimeoutHero)
+      resizeTimeoutHero = setTimeout(() => {
+        initHeroParticles()
+      }, 200)
+    }
+
+    window.addEventListener("resize", handleResizeHero)
+
+    initHeroParticles()
+    animateHeroParticles()
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMoveHero)
+      window.removeEventListener("mouseout", handleMouseOutHero)
+      window.removeEventListener("resize", handleResizeHero)
+    }
+  }, []) // ← only once on mount
+
+  // ── (C) Second effect: animate “body” (rest‐of‐page) particles ──
+  useEffect(() => {
+    const canvas = canvasBodyRef.current
+    if (!canvas) {
+      console.error("Body canvas not found!")
+      return
+    }
+    const ctx = canvas.getContext("2d")
+    if (!ctx) {
+      console.error("Could not get 2D context for body!")
+      return
+    }
+
+    // Body can have different parameters (e.g. darker, slower, fewer/larger particles)
+    const bodyParticleColor = "rgba(100,100,110,0.4)"
+    const bodyParticleRadius = 3.0
+
+    let particles: BodyParticle[] = []
+    const mouse = { x: undefined as number | undefined, y: undefined as number | undefined, radius: 120 }
+
+    function handleMouseMoveBody(e: MouseEvent) {
+      mouse.x = e.clientX
+      mouse.y = e.clientY
+    }
+    function handleMouseOutBody() {
+      mouse.x = undefined
+      mouse.y = undefined
+    }
+    window.addEventListener("mousemove", handleMouseMoveBody)
+    window.addEventListener("mouseout", handleMouseOutBody)
+
+    class BodyParticle {
+      x: number
+      y: number
+      baseX: number
+      baseY: number
+      density: number
+      size: number
+      color: string
+      driftVx: number
+      driftVy: number
+      vx: number
+      vy: number
+
+      constructor(x: number, y: number) {
+        this.x = x
+        this.y = y
+        this.baseX = x
+        this.baseY = y
+        this.density = Math.random() * 20 + 8
+        this.size = bodyParticleRadius
+        this.color = bodyParticleColor
+        this.driftVx = (Math.random() - 0.5) * 0.05
+        this.driftVy = (Math.random() - 0.5) * 0.05
+        this.vx = this.driftVx
+        this.vy = this.driftVy
+      }
+
+      draw() {
+        ctx.fillStyle = this.color
+        ctx.beginPath()
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2)
+        ctx.closePath()
+        ctx.fill()
+      }
+
+      update() {
+        // Drift base
+        this.baseX += this.driftVx
+        this.baseY += this.driftVy
+
+        // Bounce on body canvas edges
+        if (this.baseX <= 0 || this.baseX >= canvas.width) {
+          this.driftVx *= -1
+          this.baseX += this.driftVx * 2
+        }
+        if (this.baseY <= 0 || this.baseY >= canvas.height) {
+          this.driftVy *= -1
+          this.baseY += this.driftVy * 2
+        }
+
+        // Mouse repulsion for body
+        let repX = 0
+        let repY = 0
+        const isMouseActiveBody = mouse.x !== undefined && mouse.y !== undefined
+        if (isMouseActiveBody) {
+          const dx = mouse.x! - this.x
+          const dy = mouse.y! - this.y
+          const distance = Math.sqrt(dx * dx + dy * dy)
+          if (distance < mouse.radius) {
+            const force = (mouse.radius - distance) / mouse.radius
+            const angle = Math.atan2(dy, dx)
+            repX = -Math.cos(angle) * force * this.density * 0.25
+            repY = -Math.sin(angle) * force * this.density * 0.25
+          }
+        }
+
+        const returnSpeed = 0.04
+        const returnX = (this.baseX - this.x) * returnSpeed
+        const returnY = (this.baseY - this.y) * returnSpeed
+
+        this.vx = returnX + repX + this.driftVx
+        this.vy = returnY + repY + this.driftVy
+
+        this.x += this.vx
+        this.y += this.vy
+
+        // Clamp inside body canvas
+        this.x = Math.max(this.size, Math.min(canvas.width - this.size, this.x))
+        this.y = Math.max(this.size, Math.min(canvas.height - this.size, this.y))
+      }
+    }
+
+    function initBodyParticles() {
+      particles = []
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+      // maybe fewer particles for the body, e.g. area/12000
+      const count = Math.floor((window.innerWidth * window.innerHeight) / 12000)
+      for (let i = 0; i < count; i++) {
+        const x = Math.random() * canvas.width
+        const y = Math.random() * canvas.height
+        particles.push(new BodyParticle(x, y))
+      }
+    }
+
+    function animateBodyParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      for (const p of particles) {
+        p.update()
+        p.draw()
+      }
+      requestAnimationFrame(animateBodyParticles)
+    }
+
+    let resizeTimeoutBody: NodeJS.Timeout
+    function handleResizeBody() {
+      clearTimeout(resizeTimeoutBody)
+      resizeTimeoutBody = setTimeout(() => {
+        initBodyParticles()
+      }, 200)
+    }
+
+    window.addEventListener("resize", handleResizeBody)
+
+    initBodyParticles()
+    animateBodyParticles()
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMoveBody)
+      window.removeEventListener("mouseout", handleMouseOutBody)
+      window.removeEventListener("resize", handleResizeBody)
+    }
+  }, []) // ← only once on mount
+
+  // ───────────────────────────────────────────────────────────────
+  // (D) No more stableStars/movingStars logic—they’ve been replaced by canvases.
+  // ───────────────────────────────────────────────────────────────
 
   const memecoins = Array(9).fill({
     name: "Flappy Bird",
@@ -86,108 +378,28 @@ export default function Component() {
 
   return (
     <div className="min-h-screen bg-[#000025] text-white relative overflow-hidden">
-      {/* Stars Background */}
-      <div className="absolute inset-0 overflow-hidden">
-        {stableStars.map((star, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-white rounded-full opacity-60"
-            style={{
-              left: star.left,
-              top: star.top,
-              animationDelay: star.delay,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Header */}
-      <header className="relative z-10 flex items-center justify-between p-6 bg-[#132043]">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-gradient-to-r from-[#ffbb69] to-[#fac031] rounded-full flex items-center justify-center">
-            <span className="text-[#000025] font-bold text-sm">M</span>
-          </div>
-          <span className="text-xl font-bold">moonexpress.fun</span>
-        </div>
-
-        <nav className="hidden md:flex items-center space-x-8">
-          <a href="#" className="text-white/80 hover:text-white transition-colors">
-            How it works?
-          </a>
-          <a href="#" className="text-white/80 hover:text-white transition-colors">
-            Support
-          </a>
-        </nav>
-
-        <div className="flex items-center space-x-4">
-          <div className="flex space-x-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-[#19c0f4] hover:bg-[#19c0f4]/10 rounded-full bg-[#21325E] w-9 h-9 flex items-center justify-center transition-colors duration-300"
-            >
-              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-              </svg>
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-[#19c0f4] hover:bg-[#19c0f4]/10 rounded-full bg-[#21325E] w-9 h-9 flex items-center justify-center transition-colors duration-300"
-            >
-              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
-              </svg>
-            </Button>
-          </div>
-          <Button
-            className="w-[144px] h-[40px] rounded-[12px] shadow-[inset_0px_2px_2px_0px_#FFFFFF66] font-['Space_Grotesk'] font-bold text-[14px] leading-[79%] tracking-[-0.02em] text-white hover:brightness-110 hover:animate-gradient transition-all duration-300"
-            style={{
-              backgroundImage: "linear-gradient(96.13deg, #A130E0 -15.21%, #19C0F4 98.39%)",
-              backgroundSize: "200% 200%",
-            }}
-          >
-            Connect Wallet
-          </Button>
-        </div>
-      </header>
-
-      {/* Hero Section */}
+      {/** ─────────── HERO SECTION ─────────── **/}
       <section className="relative z-10 text-center py-16 px-6 overflow-hidden">
-        {/* Twinkling Moving Stars for Hero Section */}
-        <div className="absolute inset-0 overflow-hidden z-0">
-          {movingStars.map((star) => (
-            <div
-              key={star.id}
-              className="moving-star-container"
-              style={{
-                width: `${star.size}px`,
-                height: `${star.size}px`,
-                left: star.left,
-                animationDelay: star.animationDelay,
-                animationDuration: star.animationDuration,
-              }}
-            >
-              <div
-                className="moving-star"
-                style={{
-                  width: "inherit",
-                  height: "inherit",
-                  animationDelay: star.twinkleDelay,
-                  animationDuration: star.twinkleDuration,
-                  backgroundColor: star.backgroundColor,
-                }}
-              />
-            </div>
-          ))}
-        </div>
+        {/*
+          (1) Hero‐only canvas sits behind everything in this section.
+          It’s positioned absolutely to fill the hero’s area.
+        */}
+        <canvas
+          id="heroCanvas"
+          ref={canvasHeroRef}
+          className="absolute inset-0 z-0 w-full h-full bg-transparent"
+        />
+
         <div className="max-w-6xl mx-auto relative z-10">
           <div className="flex flex-col lg:flex-row items-center justify-between">
             <div className="lg:w-1/2 mb-8 lg:mb-0">
               <div className="relative w-[576px] h-[576px] mx-auto">
                 {/* Moon image */}
-                <img src="/moon.svg" alt="Moon" className="absolute inset-0 w-full h-full object-contain" />
-
+                <img
+                  src="/moon.svg"
+                  alt="Moon"
+                  className="absolute inset-0 w-full h-full object-contain"
+                />
                 {/* Rocket image */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <img
@@ -213,7 +425,8 @@ export default function Component() {
                 <Button
                   className="text-white w-[150px] h-[40px] rounded-[12px] shadow-[inset_0px_2px_2px_0px_#FFFFFF66] text-sm hover:brightness-110 hover:animate-gradient transition-all duration-300"
                   style={{
-                    backgroundImage: "linear-gradient(96.13deg, #A130E0 -15.21%, #19C0F4 98.39%)",
+                    backgroundImage:
+                      "linear-gradient(96.13deg, #A130E0 -15.21%, #19C0F4 98.39%)",
                     backgroundSize: "200% 200%",
                   }}
                 >
@@ -221,11 +434,7 @@ export default function Component() {
                 </Button>
                 <Button
                   variant="outline"
-                  className="border-[#19c0f4] text-[#19c0f4] bg-transparent hover:bg-white hover:text-black w-[155px] h-[40px] rounded-[12px] border text-sm transition-colors duration-300"
-                  style={{
-                    borderWidth: "1px",
-                    borderColor: "#19C0F4",
-                  }}
+                  className="border-[#19c0f4] text-[#19c0f4] bg-transparent hover:bg-[#19C0F4] hover:text-white w-[155px] h-[40px] rounded-[12px] border text-sm transition-colors duration-300"
                 >
                   How it works?
                 </Button>
@@ -235,8 +444,17 @@ export default function Component() {
         </div>
       </section>
 
-      {/* Memecoins Section */}
-      <section className="relative z-10 px-6 pb-16">
+      {/** ─────────── BODY SECTION (everything else) ─────────── **/}
+      {/* Place a full‐page (or below-hero) fixed/absolute canvas here. */}
+      <div className="relative z-0">
+      <canvas
+        id="bodyCanvas"
+        ref={canvasBodyRef}
+        className="absolute inset-0 z-0 w-full h-full bg-transparent"
+      />
+
+      {/* All the sections below “sit on top” (z-10) so they don’t get covered */}
+      <section className="relative z-10 px-6 pb-16 pt-4">
         <div className="max-w-7xl mx-auto bg-[#0B152F] p-8 rounded-3xl">
           <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
             <div className="flex items-center space-x-4">
@@ -261,16 +479,33 @@ export default function Component() {
                 <SelectTrigger className="bg-[#21325e]/50 border-[#21325e] text-white w-32">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">Newest</SelectItem>
-                  <SelectItem value="oldest">Oldest</SelectItem>
-                  <SelectItem value="market-cap">Market Cap</SelectItem>
+                <SelectContent
+                  className="bg-[#0e1a38] border border-[#21325e] text-white"
+                >
+                  {/* Each item: light‐grey text, darker hover, and selected highlight */}
+                  <SelectItem
+                    value="newest"
+                    className="cursor-pointer text-white/80 hover:text-white data-[highlighted]:bg-[#19c0f4] data-[selected]:bg-[#19c0f4]/20"
+                  >
+                    Newest
+                  </SelectItem>
+                  <SelectItem
+                    value="oldest"
+                    className="cursor-pointer text-white/80 hover:text-white data-[highlighted]:bg-[#19c0f4] data-[selected]:bg-[#19c0f4]/20"
+                  >
+                    Oldest
+                  </SelectItem>
+                  <SelectItem
+                    value="market-cap"
+                    className="cursor-pointer text-white/80 hover:text-white data-[highlighted]:bg-[#19c0f4] data-[selected]:bg-[#19c0f4]/20"
+                  >
+                    Market Cap
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          {/* Memecoins Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {memecoins.map((coin, index) => (
               <Card
@@ -306,9 +541,34 @@ export default function Component() {
                       </div>
                     </div>
                   </div>
-
+                  <div className="px-4 py-4">
+                    <div className="relative w-full h-2 bg-[#0e1a38] rounded-full overflow-hidden">
+                    <div className="absolute top-0 left-0 h-full w-[18%] bg-gradient-to-r from-[#a130e0] to-[#19c0f4]"></div>
+                    </div>
+                  </div>
                   <div className="flex items-center justify-between p-4">
                     <div className="flex space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-[#19c0f4] hover:bg-[#19c0f4]/10 w-8 h-8 transition-colors duration-300"
+                      >
+                        <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="w-4 h-4"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path
+      fillRule="evenodd"
+      d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10
+         10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8
+         s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zM12 4.5a7.5 7.5 0 100 15
+         7.5 7.5 0 000-15zm0 1.5a6 6 0 014.472 10.016A6 6 0 017.528 6z"
+      clipRule="evenodd"
+    />
+  </svg>
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -336,31 +596,7 @@ export default function Component() {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="relative z-10 flex items-center justify-between p-6 border-t border-[#21325e]/30">
-        <div className="flex space-x-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-[#19c0f4] hover:bg-[#19c0f4]/10 rounded-full bg-[#21325E] w-9 h-9 flex items-center justify-center transition-colors duration-300"
-          >
-            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-            </svg>
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-[#19c0f4] hover:bg-[#19c0f4]/10 rounded-full bg-[#21325E] w-9 h-9 flex items-center justify-center transition-colors duration-300"
-          >
-            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.30.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
-            </svg>
-          </Button>
-        </div>
-        <div className="text-sm text-white/60">All right reserved @moonexpress.fun</div>
-      </footer>
+      </div>
     </div>
   )
 }
