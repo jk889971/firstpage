@@ -5,7 +5,7 @@ import { X, Send } from "lucide-react";
 
 export default function SiteNavbar() {
   return (
-    <header className="flex items-center justify-between px-6 py-4 bg-[#132043] max-[500px]:justify-center max-[500px]:gap-4">
+    <header className="z-20 flex items-center justify-between px-6 py-4 bg-[#132043] max-[500px]:justify-center max-[500px]:gap-4">
       {/* ─── LEFT SIDE ─── */}
       <div className="flex items-center gap-4">
         {/*

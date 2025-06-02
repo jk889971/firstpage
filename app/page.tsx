@@ -59,18 +59,21 @@ export default function Component() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [cardsPerPage, setCardsPerPage] = useState<number>(15);
 
+  const [searchQuery, setSearchQuery] = useState("")
+
   const indexOfLast = currentPage * cardsPerPage;
   const indexOfFirst = indexOfLast - cardsPerPage;
   const currentCoins = allMemecoins.slice(indexOfFirst, indexOfLast);
+
+  const filtered = currentCoins.filter((c) =>
+    c.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const totalPages = Math.ceil(allMemecoins.length / cardsPerPage);
 
   const router = useRouter();
 
-  // ── (A) Two refs: one for hero, one for the rest of the page ──
-  const canvasHeroRef = useRef<HTMLCanvasElement | null>(null)
-  const canvasBodyRef = useRef<HTMLCanvasElement | null>(null)
-
-  const [searchQuery, setSearchQuery] = useState("")
+  const starfieldRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
     const newTotal = Math.ceil(allMemecoins.length / cardsPerPage);
@@ -101,328 +104,111 @@ export default function Component() {
     return () => window.removeEventListener("resize", updateCardsPerPage);
   }, []);
 
-  // ── (B) First effect: animate “hero” particles ──
+  /* ─── (1) STATIC star-field – no mouse interaction ─── */
   useEffect(() => {
-    const canvas = canvasHeroRef.current
-    if (!canvas) {
-      console.error("Hero canvas not found!")
-      return
-    }
-    const ctx = canvas.getContext("2d")
-    if (!ctx) {
-      console.error("Could not get 2D context for hero!")
-      return
-    }
+    let frameId: number = 0
 
-    // You can tweak these values for hero vs body:
-    const heroParticleColor = "rgba(255,255,255,0.6)"  // e.g. bright white
-    const heroParticleRadius = 2.0
+    const canvas = starfieldRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
 
-    let particles: HeroParticle[] = []
-    const mouse = { x: undefined as number | undefined, y: undefined as number | undefined, radius: 80 }
+    const DENSITY = 8_000           // px² / star   (smaller ⇒ more)
+    const RADII   = [1, 1.5, 2.2]   // three dot sizes
 
-    // Mouse events (identical shape, but separate closure from body)
-    function handleMouseMoveHero(e: MouseEvent) {
-      mouse.x = e.clientX
-      mouse.y = e.clientY
-    }
-    function handleMouseOutHero() {
-      mouse.x = undefined
-      mouse.y = undefined
-    }
-    window.addEventListener("mousemove", handleMouseMoveHero)
-    window.addEventListener("mouseout", handleMouseOutHero)
+    type Dot = { x: number; y: number; r: number }
+    let dots: Dot[] = []
 
-    // A small Particle class for the hero. You could give a different density/speed than the body.
-    class HeroParticle {
-      x: number
-      y: number
-      baseX: number
-      baseY: number
-      density: number
-      size: number
-      color: string
-      driftVx: number
-      driftVy: number
-      vx: number
-      vy: number
-
-      constructor(x: number, y: number) {
-        this.x = x
-        this.y = y
-        this.baseX = x
-        this.baseY = y
-        this.density = Math.random() * 10 + 3    // smaller density range
-        this.size = heroParticleRadius
-        this.color = heroParticleColor
-        this.driftVx = (Math.random() - 0.5) * 0.1
-        this.driftVy = (Math.random() - 0.5) * 0.1
-        this.vx = this.driftVx
-        this.vy = this.driftVy
-      }
-
-      draw() {
-        ctx.fillStyle = this.color
-        ctx.beginPath()
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2)
-        ctx.closePath()
-        ctx.fill()
-      }
-
-      update() {
-        // Drift “base” point
-        this.baseX += this.driftVx
-        this.baseY += this.driftVy
-
-        // Bounce at edges of the hero canvas
-        if (this.baseX <= 0 || this.baseX >= canvas.width) {
-          this.driftVx *= -1
-          this.baseX += this.driftVx * 2
-        }
-        if (this.baseY <= 0 || this.baseY >= canvas.height) {
-          this.driftVy *= -1
-          this.baseY += this.driftVy * 2
-        }
-
-        // Mouse repulsion (hero-specific radius)
-        let repX = 0
-        let repY = 0
-        const isMouseActiveHero = mouse.x !== undefined && mouse.y !== undefined
-        if (isMouseActiveHero) {
-          const dx = mouse.x! - this.x
-          const dy = mouse.y! - this.y
-          const distance = Math.sqrt(dx * dx + dy * dy)
-          if (distance < mouse.radius) {
-            const force = (mouse.radius - distance) / mouse.radius
-            const angle = Math.atan2(dy, dx)
-            repX = -Math.cos(angle) * force * this.density * 0.4
-            repY = -Math.sin(angle) * force * this.density * 0.4
-          }
-        }
-
-        const returnSpeed = 0.05
-        const returnX = (this.baseX - this.x) * returnSpeed
-        const returnY = (this.baseY - this.y) * returnSpeed
-
-        this.vx = returnX + repX + this.driftVx
-        this.vy = returnY + repY + this.driftVy
-
-        this.x += this.vx
-        this.y += this.vy
-
-        // Clamp to hero canvas
-        this.x = Math.max(this.size, Math.min(canvas.width - this.size, this.x))
-        this.y = Math.max(this.size, Math.min(canvas.height - this.size, this.y))
-      }
-    }
-
-    function initHeroParticles() {
-      particles = []
-      canvas.width = window.innerWidth
+    const reset = () => {
+      canvas.width  = window.innerWidth
       canvas.height = window.innerHeight
-      const count = Math.floor((window.innerWidth * window.innerHeight) / 6000) // adjust density
+      dots = []
+      const count = Math.ceil((canvas.width * canvas.height) / DENSITY)
       for (let i = 0; i < count; i++) {
-        const x = Math.random() * canvas.width
-        const y = Math.random() * canvas.height
-        particles.push(new HeroParticle(x, y))
+        dots.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          r: RADII[Math.floor(Math.random() * RADII.length)],
+        })
       }
     }
 
-    function animateHeroParticles() {
+    const step = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
-      for (const p of particles) {
-        p.update()
-        p.draw()
-      }
-      requestAnimationFrame(animateHeroParticles)
+      ctx.fillStyle = '#fff'
+      for (const d of dots) ctx.fillRect(d.x, d.y, d.r, d.r)
+      frameId = requestAnimationFrame(step)
     }
 
-    let resizeTimeoutHero: NodeJS.Timeout
-    function handleResizeHero() {
-      clearTimeout(resizeTimeoutHero)
-      resizeTimeoutHero = setTimeout(() => {
-        initHeroParticles()
-      }, 200)
-    }
-
-    window.addEventListener("resize", handleResizeHero)
-
-    initHeroParticles()
-    animateHeroParticles()
+    reset()
+    step()
+    window.addEventListener('resize', reset)
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMoveHero)
-      window.removeEventListener("mouseout", handleMouseOutHero)
-      window.removeEventListener("resize", handleResizeHero)
-    }
-  }, []) // ← only once on mount
-
-  // ── (C) Second effect: animate “body” (rest‐of‐page) particles ──
-  useEffect(() => {
-    const canvas = canvasBodyRef.current
-    if (!canvas) {
-      console.error("Body canvas not found!")
-      return
-    }
-    const ctx = canvas.getContext("2d")
-    if (!ctx) {
-      console.error("Could not get 2D context for body!")
-      return
-    }
-
-    // Body can have different parameters (e.g. darker, slower, fewer/larger particles)
-    const bodyParticleColor = "rgba(100,100,110,0.4)"
-    const bodyParticleRadius = 3.0
-
-    let particles: BodyParticle[] = []
-    const mouse = { x: undefined as number | undefined, y: undefined as number | undefined, radius: 120 }
-
-    function handleMouseMoveBody(e: MouseEvent) {
-      mouse.x = e.clientX
-      mouse.y = e.clientY
-    }
-    function handleMouseOutBody() {
-      mouse.x = undefined
-      mouse.y = undefined
-    }
-    window.addEventListener("mousemove", handleMouseMoveBody)
-    window.addEventListener("mouseout", handleMouseOutBody)
-
-    class BodyParticle {
-      x: number
-      y: number
-      baseX: number
-      baseY: number
-      density: number
-      size: number
-      color: string
-      driftVx: number
-      driftVy: number
-      vx: number
-      vy: number
-
-      constructor(x: number, y: number) {
-        this.x = x
-        this.y = y
-        this.baseX = x
-        this.baseY = y
-        this.density = Math.random() * 20 + 8
-        this.size = bodyParticleRadius
-        this.color = bodyParticleColor
-        this.driftVx = (Math.random() - 0.5) * 0.05
-        this.driftVy = (Math.random() - 0.5) * 0.05
-        this.vx = this.driftVx
-        this.vy = this.driftVy
-      }
-
-      draw() {
-        ctx.fillStyle = this.color
-        ctx.beginPath()
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2)
-        ctx.closePath()
-        ctx.fill()
-      }
-
-      update() {
-        // Drift base
-        this.baseX += this.driftVx
-        this.baseY += this.driftVy
-
-        // Bounce on body canvas edges
-        if (this.baseX <= 0 || this.baseX >= canvas.width) {
-          this.driftVx *= -1
-          this.baseX += this.driftVx * 2
-        }
-        if (this.baseY <= 0 || this.baseY >= canvas.height) {
-          this.driftVy *= -1
-          this.baseY += this.driftVy * 2
-        }
-
-        // Mouse repulsion for body
-        let repX = 0
-        let repY = 0
-        const isMouseActiveBody = mouse.x !== undefined && mouse.y !== undefined
-        if (isMouseActiveBody) {
-          const dx = mouse.x! - this.x
-          const dy = mouse.y! - this.y
-          const distance = Math.sqrt(dx * dx + dy * dy)
-          if (distance < mouse.radius) {
-            const force = (mouse.radius - distance) / mouse.radius
-            const angle = Math.atan2(dy, dx)
-            repX = -Math.cos(angle) * force * this.density * 0.25
-            repY = -Math.sin(angle) * force * this.density * 0.25
-          }
-        }
-
-        const returnSpeed = 0.04
-        const returnX = (this.baseX - this.x) * returnSpeed
-        const returnY = (this.baseY - this.y) * returnSpeed
-
-        this.vx = returnX + repX + this.driftVx
-        this.vy = returnY + repY + this.driftVy
-
-        this.x += this.vx
-        this.y += this.vy
-
-        // Clamp inside body canvas
-        this.x = Math.max(this.size, Math.min(canvas.width - this.size, this.x))
-        this.y = Math.max(this.size, Math.min(canvas.height - this.size, this.y))
-      }
-    }
-
-    function initBodyParticles() {
-      particles = []
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
-      // maybe fewer particles for the body, e.g. area/12000
-      const count = Math.floor((window.innerWidth * window.innerHeight) / 8000)
-      for (let i = 0; i < count; i++) {
-        const x = Math.random() * canvas.width
-        const y = Math.random() * canvas.height
-        particles.push(new BodyParticle(x, y))
-      }
-    }
-
-    function animateBodyParticles() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      for (const p of particles) {
-        p.update()
-        p.draw()
-      }
-      requestAnimationFrame(animateBodyParticles)
-    }
-
-    let resizeTimeoutBody: NodeJS.Timeout
-    function handleResizeBody() {
-      clearTimeout(resizeTimeoutBody)
-      resizeTimeoutBody = setTimeout(() => {
-        initBodyParticles()
-      }, 200)
-    }
-
-    window.addEventListener("resize", handleResizeBody)
-
-    initBodyParticles()
-    animateBodyParticles()
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMoveBody)
-      window.removeEventListener("mouseout", handleMouseOutBody)
-      window.removeEventListener("resize", handleResizeBody)
+      window.removeEventListener('resize', reset)
+      cancelAnimationFrame(frameId)
     }
   }, [])
 
+  /* ─── (2) Shooting stars – upper-left ➜ lower-right ─── */
+  useEffect(() => {
+    const canvas = starfieldRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    let active = true
+
+    const spawn = () => {
+  if (!active) return
+
+  const margin = 80                              // stars start off-screen
+  const startX = -margin + Math.random() * (canvas.width * 0.25)  // –80 → 25 % width
+  const startY = -margin + Math.random() * (canvas.height * 0.25) // –80 → 25 % height
+
+  const len    = 350 + Math.random() * 550       // 350 – 900 px
+  const endX   = startX + len                    // ↘ 45°
+  const endY   = startY + len
+
+  const SPEED  = 1200                            // pixels per second
+  const duration = (len / SPEED) * 1000          // ms
+  const born = performance.now()
+
+  const draw = (now: number) => {
+      if (!active) return
+      const t = (now - born) / duration            // 0 → 1 over ‘duration’
+      if (t > 1) return
+      ctx.save()
+      ctx.globalAlpha = 1 - t
+      ctx.strokeStyle = '#fff'
+      ctx.lineWidth   = 2
+      ctx.beginPath()
+      ctx.moveTo(startX, startY)
+      ctx.lineTo(startX + len * t, startY + len * t)
+      ctx.stroke()
+      ctx.restore()
+      requestAnimationFrame(draw)
+    }
+
+    requestAnimationFrame(draw)
+
+    /* schedule the next star in 2–4 s  */
+    setTimeout(spawn, 2000 + Math.random() * 2000)
+  }
+
+    spawn()
+    return () => { active = false }
+  }, [])
+
+
   return (
     <div className="min-h-screen bg-[#000025] text-white relative overflow-x-hidden">
+      <canvas
+        ref={starfieldRef}
+        className="fixed inset-0  z-0  w-screen h-screen pointer-events-none select-none"
+      />
       {/** ─────────── HERO SECTION ─────────── **/}
       <section className="relative z-10 text-center py-16 px-6 overflow-hidden">
-        {/* (1) Hero-only canvas sits behind everything in this section */}
-        <canvas
-          id="heroCanvas"
-          ref={canvasHeroRef}
-          className="absolute inset-0 z-0 w-full h-full bg-transparent"
-        />
-
         <div className="max-w-6xl mx-auto relative z-10">
           <div className="flex flex-col lg:flex-row items-center lg:justify-between justify-center">
             {/* ─── Moon + Rocket Container ─── */}
@@ -546,15 +332,7 @@ export default function Component() {
       </section>
 
       {/** ─────────── BODY SECTION (everything else) ─────────── **/}
-      {/* Place a full‐page (or below-hero) fixed/absolute canvas here. */}
       <div className="relative z-0">
-      <canvas
-        id="bodyCanvas"
-        ref={canvasBodyRef}
-        className="absolute inset-0 z-0 w-full h-full bg-transparent"
-      />
-
-      {/* All the sections below “sit on top” (z-10) so they don’t get covered */}
       <section className="relative z-10 px-6 pb-16 pt-4">
         <div className="max-w-7xl mx-auto bg-[#0B152F] p-8 rounded-3xl">
           <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4 max-[400px]:items-center">
@@ -572,7 +350,6 @@ export default function Component() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="bg-[#21325e]/50 border-[#21325e] text-white placeholder:text-white/50 pr-12 w-full"
                 />
-                {/** Hide magnifier when width ≤ 300px */}
                 <Button className="absolute right-0 top-0 bottom-0 bg-[#19c0f4] hover:bg-[#16abd9] text-white rounded-l-none hover:brightness-110 transition-all duration-300">
                   <Search className="w-4 h-4" />
                 </Button>
@@ -608,7 +385,7 @@ export default function Component() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {currentCoins.map((coin, index) => (
+            {filtered.map((coin, index) => (
               <div key={index} className="cursor-pointer" onClick={() => router.push("/token")}>
               <Card
                 className="bg-[#21325e]/30 border-[#21325e] backdrop-blur-sm hover:bg-[#21325e]/50 transition-colors duration-300 rounded-2xl overflow-hidden"

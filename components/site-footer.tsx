@@ -5,7 +5,7 @@ import { X, Send } from "lucide-react";
 
 export default function SiteFooter() {
   return (
-    <footer className="bg-[#132043] border-t border-[#21325e]/30 px-6 py-4">
+    <footer className="z-20 bg-[#132043] border-t border-[#21325e]/30 px-6 py-4">
       {/** ─── layout for md and up (≥768px) ─── **/}
       <div className="hidden md:flex items-center relative">
         {/* Icons on the left, zero gap */}
