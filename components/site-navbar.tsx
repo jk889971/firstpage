@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 export default function SiteNavbar() {
   const pathname = usePathname();
@@ -20,7 +21,7 @@ export default function SiteNavbar() {
         "
       >
         {/* ─── LEFT SIDE (Logo) ─── */}
-        <div className="flex items-center gap-4">
+        <Link href="/" className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             {/* full‐logo.png is shown when width > 400px */}
             <img
@@ -36,7 +37,7 @@ export default function SiteNavbar() {
               className="hidden max-[400px]:block h-8"
             />
           </div>
-        </div>
+        </Link>
 
         {/* ─── CENTER LINKS (only ≥ 900px) ─── */}
         <nav className="hidden min-[900px]:flex flex-1 justify-center space-x-8">

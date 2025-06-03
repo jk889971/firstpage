@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useRef, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -14,6 +15,8 @@ type Toast = {
 }
 
 export default function CreateTokenForm() {
+  const router = useRouter()
+
   //── form state ────────────────────────────────────────────────────────────────
   const [tokenName, setTokenName] = useState<string>("")
   const [symbol, setSymbol] = useState<string>("")
@@ -36,6 +39,38 @@ export default function CreateTokenForm() {
 
   //── TOAST STATE ────────────────────────────────────────────────────────────────
   const [toasts, setToasts] = useState<Toast[]>([])
+
+  //── DRAG‐STATE ─────────────────────────────────────────────────────────────────
+  // true while the user is dragging a file anywhere over the window
+  const [isDragging, setIsDragging] = useState(false)
+
+  // Prevent default browser "snatch" behavior and track dragging globally
+  useEffect(() => {
+    const onWindowDragOver = (e: DragEvent) => {
+      e.preventDefault()
+      setIsDragging(true)
+    }
+    const onWindowDragLeave = (e: DragEvent) => {
+      // If they drag out of the window entirely, cancel the dimming
+      if ((e.target as Element).tagName === "HTML") {
+        setIsDragging(false)
+      }
+    }
+    const onWindowDrop = (e: DragEvent) => {
+      e.preventDefault()
+      setIsDragging(false)
+    }
+
+    window.addEventListener("dragover", onWindowDragOver)
+    window.addEventListener("dragleave", onWindowDragLeave)
+    window.addEventListener("drop", onWindowDrop)
+
+    return () => {
+      window.removeEventListener("dragover", onWindowDragOver)
+      window.removeEventListener("dragleave", onWindowDragLeave)
+      window.removeEventListener("drop", onWindowDrop)
+    }
+  }, [])
 
   // Enqueue a new toast (bottom‐right). Auto‐removes after 10 seconds.
   const addToast = (message: string) => {
@@ -83,7 +118,7 @@ export default function CreateTokenForm() {
         h > MAX_DIMENSION
       ) {
         addToast(
-          `Image dimensions must be between ${MIN_DIMENSION}×${MIN_DIMENSION} and ${MAX_DIMENSION}×${MAX_DIMENSION}. Yours is ${w}×${h}.`
+          `Image dimensions must be between ${MIN_DIMENSION}×${MIN_DIMENSION} to ${MAX_DIMENSION}×${MAX_DIMENSION}. Yours is ${w}×${h}.`
         )
         return
       }
@@ -151,6 +186,13 @@ export default function CreateTokenForm() {
 
   return (
     <div className="min-h-screen bg-[#0b152f] flex flex-col">
+      {/* ─── GLOBAL DRAG OVERLAY ──────────────────────────────────────────── */}
+      {isDragging && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 pointer-events-none"
+        />
+      )}
+
       {/* ─── Main Form Card ────────────────────────────────────────────────────── */}
       <div className="flex-1 flex items-center justify-center p-4">
         <Card className="w-[90vw] sm:w-full sm:max-w-md bg-[#0e1a38] border-0 text-white shadow-xl rounded-2xl">
@@ -189,21 +231,58 @@ export default function CreateTokenForm() {
               </div>
 
               {/* ─── Image Upload Dropzone ───────────────────────────────── */}
-              <div className="bg-[#21325e] rounded-xl p-4">
-                <div className="flex items-center gap-2 max-[335px]:flex-col max-[335px]:items-center">
+              <div className="bg-[#21325e] rounded-xl p-4 relative z-50">
+                <div
+                  className="flex items-center gap-2 max-[335px]:flex-col max-[335px]:items-center"
+                  onDragEnter={(e) => {
+                    e.stopPropagation()
+                    setIsDragging(true)
+                  }}
+                  onDragLeave={(e) => {
+                    e.stopPropagation()
+                    // if leaving dropzone but still over window, keep isDragging=true
+                    // only clear if the mouse fully leaves this element
+                    const rect = (e.target as HTMLElement).getBoundingClientRect()
+                    if (
+                      e.clientX < rect.left ||
+                      e.clientX > rect.right ||
+                      e.clientY < rect.top ||
+                      e.clientY > rect.bottom
+                    ) {
+                      setIsDragging(false)
+                    }
+                  }}
+                >
                   <div
-                    className="flex-1 bg-[#132043] rounded-xl border border-dashed border-gray-600 p-3 flex items-center justify-center h-12 cursor-pointer hover:border-[#19C0F4] transition-colors"
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
+                    className="flex-1 bg-[#132043] rounded-xl border border-dashed border-gray-600 p-3 flex items-center justify-center h-12 cursor-pointer hover:border-[#19C0F4] transition-colors relative z-50"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault()
+                      setIsDragging(false)
+                      const files = e.dataTransfer.files
+                      if (files.length > 0) {
+                        handleFileSelect(files[0])
+                      }
+                    }}
                     onClick={handleUploadClick}
                   >
                     <p className="text-gray-400 text-sm">
-                      {selectedFile ? selectedFile.name : "Drag & Drop image"}
+                      {selectedFile
+                      ? (() => {
+                          const full = selectedFile.name
+                          const idx = full.lastIndexOf(".")
+                          const base = idx > 0 ? full.slice(0, idx) : full
+                          const ext = idx > 0 ? full.slice(idx) : ""
+                          return base.length > 9
+                            ? base.slice(0, 9) + "..." + ext
+                            : full
+                        })()
+                      : "Drag & Drop image"}
                     </p>
                   </div>
                   <span className="text-gray-400">or</span>
                   <Button
-                    className="bg-[#19C0F4] hover:bg-[#16abd9] text-white h-12 rounded-xl transition-colors transform max-[335px]:scale-[0.8]"
+                    className="bg-[#19C0F4] hover:bg-[#16abd9] text-white h-12 rounded-xl transition-colors transform max-[335px]:scale-[0.8] relative z-50"
                     onClick={handleUploadClick}
                     type="button"
                   >
@@ -263,12 +342,7 @@ export default function CreateTokenForm() {
                   variant="outline"
                   className="flex-1 border-[#19C0F4] text-[#19C0F4] hover:bg-[#19C0F4] hover:text-white rounded-xl transition-colors bg-transparent duration-300"
                   onClick={() => {
-                    /* Optionally clear fields if desired:
-                       setTokenName("");
-                       setSymbol("");
-                       setDescription("");
-                       setSelectedFile(null);
-                    */
+                    router.push("/");
                   }}
                 >
                   Cancel
@@ -316,16 +390,16 @@ export default function CreateTokenForm() {
               <h2 className="text-xl font-bold text-white mb-8">(Optional) Buy Tokens</h2>
 
               <div className="space-y-6">
-                <div className="flex justify-between items-end mb-2">
-                  <span className="text-white text-sm font-medium">Amount</span>
-                  <div className="flex items-center gap-2 bg-[#21325e] rounded-lg px-3 py-1.5">
+                <div className="flex justify-between items-end mb-1 max-[220px]:flex-col max-[220px]:items-center max-[220px]:gap-3">
+                  <span className="text-white text-sm font-medium max-[220px]:order-2">Amount</span>
+                  <div className="flex items-center gap-2 bg-[#21325e] rounded-lg px-3 py-1.5 max-[220px]:order-1">
                     <div className="w-5 h-5 bg-blue-500 rounded-full"></div>
                     <span className="text-white text-sm font-medium">TON</span>
                   </div>
                 </div>
 
                 <div className="bg-[#132043] rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center justify-between mb-2 max-[220px]:flex-col max-[220px]:items-center">
                     <input
                       type="number"
                       placeholder="0.0"
@@ -333,17 +407,18 @@ export default function CreateTokenForm() {
                       onChange={handleAmountChange}
                       className="
                         bg-transparent border-0 text-white text-xl font-bold outline-none
-                        w-[65%] text-left [appearance:textfield]
+                        w-[65%] text-left max-[221px]:text-center [appearance:textfield]
                         [&::-webkit-outer-spin-button]:appearance-none
                         [&::-webkit-inner-spin-button]:appearance-none
+                        max-[220px]:w-full
                       "
                     />
-                    <button className="bg-[#19C0F4] hover:bg-[#16abd9] text-white px-3 py-1 rounded-lg text-xs font-medium transition-colors">
+                    <button className="bg-[#19C0F4] hover:bg-[#16abd9] text-white px-3 py-1 rounded-lg text-xs font-medium transition-colors max-[220px]:mt-3">
                       MAX
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-4 gap-3">
+                  <div className="grid grid-cols-4 gap-3 max-[330px]:hidden">
                     {["0.1", "0.5", "1.0", "5.0"].map((val) => (
                       <button
                         key={val}
@@ -358,7 +433,7 @@ export default function CreateTokenForm() {
                     ))}
                   </div>
 
-                  <div className="space-y-3 pt-6">
+                  <div className="space-y-3 pt-4">
                     {/* Continue Button with “Connect Wallet”–style hover */}
                     <Button
                       className="
@@ -425,6 +500,8 @@ export default function CreateTokenForm() {
                     sm:w-[280px] sm:h-[280px]
                     md:w-[320px] md:h-[320px]
                     lg:w-[360px] lg:h-[360px]
+                    max-[639px]:w-[280px] max-[639px]:h-[280px]
+                    max-[295px]:w-[120px] max-[295px]:h-[120px]
                   "
                 />
               </div>
@@ -460,14 +537,18 @@ export default function CreateTokenForm() {
       )}
 
       {/* ─── Toast Container (bottom‐right) ─────────────────────────────────────── */}
-      <div className="fixed bottom-4 right-4 flex flex-col space-y-2 z-50">
+      <div className="fixed bottom-4 right-4 flex flex-col space-y-2 z-[99999] max-[640px]:left-1/2 max-[640px]:transform max-[640px]:-translate-x-1/2 max-[640px]:right-auto">
         {toasts.map((toast) => (
           <div
             key={toast.id}
             className="
               relative
               bg-[#000024] text-white px-4 py-2 rounded shadow-lg
-              max-w-xs w-full
+              w-full
+              text-base
+              max-[640px]:w-[90vw]
+              max-[500px]:text-sm
+              max-[400px]:text-xs
             "
           >
             <div className="toast-progress"></div>
