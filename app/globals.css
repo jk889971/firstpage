@@ -65,6 +65,20 @@ body {
   }
 }
 
+@keyframes reverse-progress {
+  from { width: 100%; }
+  to   { width: 0%; }
+}
+
+.toast-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 2px;                 /* thin bar */
+  background-color: #19c0f4;     /* or whatever color you like */
+  animation: reverse-progress 10s linear forwards;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
