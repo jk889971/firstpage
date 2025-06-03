@@ -16,9 +16,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen flex flex-col bg-[#000025] text-white">
+      <body className="min-h-screen flex flex-col bg-[#000025] text-white max-[899px]:pb-16">
+        {/* ─── TOP NAVBAR (always visible) ─── */}
         <SiteNavbar />
-        <main className="flex-1">{children}</main>
+
+        {/* ─── PAGE CONTENT (hero, cards, etc.) ─── */}
+        <main className="flex-1">
+          {children}
+        </main>
+
+        {/* ─── SITE FOOTER (always rendered below everything) ─── */}
         <SiteFooter />
       </body>
     </html>
