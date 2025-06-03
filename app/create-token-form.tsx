@@ -527,7 +527,7 @@ export default function CreateTokenForm() {
                   backgroundSize: "200% 200%",
                   height: "48px",
                 }}
-                onClick={() => setShowSuccessModal(false)}
+                onClick={() => router.push("/token")}
               >
                 View Token
               </Button>

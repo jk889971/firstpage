@@ -27,6 +27,22 @@ body {
   .animate-gradient-pulse {
     animation: gradient-pulse 2s ease-in-out infinite;
   }
+
+  @keyframes glowPulse {
+    0% {
+      box-shadow: 0 0 0px #19c0f4;
+    }
+    50% {
+      box-shadow: 0 0 14px 3px #19c0f4cc;
+    }
+    100% {
+      box-shadow: 0 0 0px #19c0f4;
+    }
+  }
+
+  .animate-pulse-bar {
+    animation: glowPulse 2.2s infinite ease-in-out;
+  }
 }
 
 @keyframes bounce {

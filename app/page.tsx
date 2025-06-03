@@ -411,9 +411,12 @@ export default function Component() {
                       </div>
                     </div>
                   </div>
-                  <div className="px-4 py-4">
+                  <div className="px-4 pt-2 pb-4">
+                    <div className="text-sm text-white/70 mb-1 text-left max-[400px]:text-center">
+                      Bonding Curve
+                    </div>
                     <div className="relative w-full h-2 bg-[#0e1a38] rounded-full overflow-hidden">
-                    <div className="absolute top-0 left-0 h-full w-[18%] bg-gradient-to-r from-[#a130e0] to-[#19c0f4]"></div>
+                      <div className="absolute top-0 left-0 h-full w-[18%] animate-pulse-bar bg-gradient-to-r from-[#a130e0] to-[#19c0f4]" />
                     </div>
                   </div>
                   <div className="flex items-center justify-between p-4 max-[400px]:flex-col max-[400px]:items-center max-[400px]:space-y-2 max-[400px]:space-x-0">
@@ -444,7 +447,10 @@ export default function Component() {
                         </svg>
                       </Button>
                     </div>
-                    <CountdownTimer initialTime={Math.floor(Math.random() * 86400) + 3600} />
+                    <div className="flex flex-col items-end max-[400px]:items-center">
+                      <div className="text-xs text-white/60 mb-1">Refunds in</div>
+                      <CountdownTimer initialTime={Math.floor(Math.random() * 86400) + 3600} />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
