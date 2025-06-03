@@ -108,14 +108,14 @@ export default function SiteNavbar() {
         </div>
       </header>
 
-      {/* ─────────── BOTTOM MOBILE MENU (only < 900px) ─────────── */}
+      {/* ─────────── BOTTOM MOBILE MENU (only < 1024px) ─────────── */}
       <div
         className="
           fixed bottom-0 left-0 right-0 z-[996]
           flex h-16 items-center justify-around
           border-t border-t-[rgba(248,250,252,0.1)]
           bg-[#132043]
-          hidden max-[899px]:flex
+          hidden max-[1023px]:flex
         "
       >
         {/* Home link */}

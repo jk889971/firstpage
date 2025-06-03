@@ -16,7 +16,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen flex flex-col bg-[#000025] text-white max-[899px]:pb-16">
+      <body className="min-h-screen flex flex-col bg-[#000025] text-white max-[1023px]:pb-16">
         {/* ─── TOP NAVBAR (always visible) ─── */}
         <SiteNavbar />
 

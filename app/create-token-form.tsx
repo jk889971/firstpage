@@ -402,9 +402,17 @@ export default function CreateTokenForm() {
                   <div className="flex items-center justify-between mb-2 max-[220px]:flex-col max-[220px]:items-center">
                     <input
                       type="number"
+                      min={0}
                       placeholder="0.0"
                       value={amount}
-                      onChange={handleAmountChange}
+                      onKeyDown={(e) => {
+                        if (e.key === "-") e.preventDefault()
+                      }}
+                      onChange={(e) => {
+                        const v = e.target.value
+                        if (v.startsWith("-")) return
+                        handleAmountChange(e)
+                      }}
                       className="
                         bg-transparent border-0 text-white text-xl font-bold outline-none
                         w-[65%] text-left max-[221px]:text-center [appearance:textfield]
