@@ -6,8 +6,8 @@ import { Send } from "lucide-react";
 export default function SiteFooter() {
   return (
     <footer className="z-20 bg-[#132043] border-t border-[#21325e]/30 px-6 py-4">
-      {/** ─── layout for md and up (≥768px) ─── **/}
-      <div className="hidden md:flex items-center relative">
+      {/** ─── layout for lg and up (≥1024px) ─── **/}
+      <div className="hidden lg:flex items-center relative">
         {/* Icons on the left, zero gap */}
         <div className="flex space-x-0">
           <Button variant="ghost" size="icon" className="text-[#19c0f4]">
@@ -26,8 +26,8 @@ export default function SiteFooter() {
         </span>
       </div>
 
-      {/** ─── layout for small (<768px) ─── **/}
-      <div className="flex flex-col items-center md:hidden">
+      {/** ─── layout for small (<1024px) ─── **/}
+      <div className="flex flex-col items-center lg:hidden">
         {/* Centered text first */}
         <span className="text-sm text-white/60 text-center">
           All rights reserved © moonexpress.fun

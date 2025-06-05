@@ -28,6 +28,23 @@ body {
     animation: gradient-pulse 2s ease-in-out infinite;
   }
 
+.theme-textarea::-webkit-scrollbar {
+  width: 6px;
+}
+.theme-textarea::-webkit-scrollbar-track {
+  background: #0e1a38;
+}
+.theme-textarea::-webkit-scrollbar-thumb {
+  background-color: #19c0f4;
+  border-radius: 3px;
+}
+
+/* Firefox */
+.theme-textarea {
+  scrollbar-width: thin;
+  scrollbar-color: #19c0f4 #0e1a38;
+}
+
   @keyframes glowPulse {
     0% {
       box-shadow: 0 0 0px #19c0f4;
@@ -173,18 +190,6 @@ body {
   }
   body {
     @apply bg-background text-foreground;
-  }
-}
-
-@keyframes twinkle {
-  0% {
-    opacity: 0.5;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.5;
   }
 }
 

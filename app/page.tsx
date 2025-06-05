@@ -30,12 +30,15 @@ function CountdownTimer({ initialTime }: { initialTime: number }) {
   }, [timeLeft])
 
   const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600)
+    const days = Math.floor(seconds / 86400)
+    const hours = Math.floor((seconds % 86400) / 3600)
     const minutes = Math.floor((seconds % 3600) / 60)
     const secs = seconds % 60
-    return `${hours.toString().padStart(2, "0")}:${minutes
+    return `${days.toString().padStart(2, "0")}:${hours
       .toString()
-      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}:${secs}`
+      .padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
   }
 
   if (timeLeft <= 0) {
