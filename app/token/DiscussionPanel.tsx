@@ -180,7 +180,7 @@ export default function DiscussionPanel({
                       setReplyToId(c.id)
                       setReplyText("")
                     }}
-                    className="mt-1 text-[#19c0f4] text-xs hover:underline"
+                    className="mt-1 text-[#19c0f4] text-xs hover:text-white"
                   >
                     Reply
                   </button>
