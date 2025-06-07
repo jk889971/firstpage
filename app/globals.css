@@ -45,6 +45,16 @@ body {
   scrollbar-color: #19c0f4 #0e1a38;
 }
 
+.theme-input {                /* controls idle + focus look */
+  @apply w-full rounded-xl bg-[#132043] px-3 py-2
+          border border-[#21325e] text-white placeholder:text-gray-400
+          focus-visible:outline-none
+          focus-visible:ring-2 focus-visible:ring-[#19c0f4]
+          focus-visible:ring-offset-0               /* remove 2-px gap */
+          focus-visible:border-[#19c0f4];
+}
+
+
   @keyframes glowPulse {
     0% {
       box-shadow: 0 0 0px #19c0f4;

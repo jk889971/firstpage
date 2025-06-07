@@ -82,7 +82,7 @@ export default function CreateTokenForm() {
   }
 
   //── VALIDATION CONSTANTS ─────────────────────────────────────────────────────
-  const MAX_FILE_SIZE = 3 * 1024 * 1024 // 3 MB
+  const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2 MB
   const MIN_DIMENSION = 100
   const MAX_DIMENSION = 1000
   const ALLOWED_EXTENSIONS = /\.(png|jpe?g|webp|gif)$/i
@@ -97,7 +97,7 @@ export default function CreateTokenForm() {
 
     // 2) size
     if (file.size > MAX_FILE_SIZE) {
-      addToast("File too large. Maximum allowed size is 3 MB.")
+      addToast("File too large. Maximum allowed size is 2 MB.")
       return
     }
 
@@ -206,7 +206,8 @@ export default function CreateTokenForm() {
                   placeholder="Token Name"
                   value={tokenName}
                   onChange={(e) => setTokenName(e.target.value)}
-                  className="bg-[#132043] border-0 h-12 text-white placeholder:text-gray-400 rounded-xl"
+                  maxLength={32}
+                  className="bg-[#132043] border-0 h-12 text-white placeholder:text-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#19c0f4]"
                 />
               </div>
 
@@ -216,17 +217,19 @@ export default function CreateTokenForm() {
                   placeholder="Symbol"
                   value={symbol}
                   onChange={(e) => setSymbol(e.target.value)}
-                  className="bg-[#132043] border-0 h-12 text-white placeholder:text-gray-400 rounded-xl"
+                  maxLength={10}
+                  className="bg-[#132043] border-0 h-12 text-white placeholder:text-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#19c0f4]"
                 />
               </div>
 
               {/* ─── Description (optional) ───────────────────────────────── */}
-              <div>
+              <div className="rounded-xl overflow-hidden border border-[#21325e] focus-within:border-[#19c0f4] focus-within:ring-2 focus-within:ring-[#19c0f4] focus-within:ring-offset-0">
                 <Textarea
                   placeholder="Description (optional)"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="bg-[#132043] border-0 min-h-[100px] text-white placeholder:text-gray-400 resize-none rounded-xl"
+                  maxLength={500}
+                  className="bg-[#132043] border-0 min-h-[100px] text-white placeholder:text-gray-400 resize-none rounded-xl theme-textarea"
                 />
               </div>
 

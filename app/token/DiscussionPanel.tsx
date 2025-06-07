@@ -83,6 +83,18 @@ export default function DiscussionPanel({
 
   return (
     <div>
+      {/* ─── Descriptive paragraph above the comment field ─── */}
+      <h2 className="text-[#c8cdd1] text-lg font-semibold max-[480px]:font-bold mb-2 max-[480px]:text-[clamp(1rem,3.5vw,1.5rem)]">
+        Flappy Bird ($FBD)
+      </h2>
+      <p className="text-[#c8cdd1] text-sm leading-relaxed mb-4 text-[clamp(0.6rem,3vw,0.875rem)]">
+        Lorem Ipsum is simply dummy text of the printing and typesetting industry.
+        Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,
+        when an unknown printer took a galley of type and scrambled it to make a type
+        specimen book. Lorem Ipsum is simply dummy text of the printing and typesetting
+        industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,
+        when an unknown printer took a galley of type and scrambled it to make a type specimen book. Lorem Ip
+      </p>
       {/* ─── Input row + live character count ─── */}
       <div className="relative pt-2 w-full">
         <textarea
@@ -99,7 +111,7 @@ export default function DiscussionPanel({
             rounded-md
             px-3 py-2
             text-white
-            placeholder:text-[#c8cdd1]
+            placeholder:text-gray-400
             focus:outline-none focus:ring-2 focus:ring-[#19c0f4]
             resize-none
             text-sm
@@ -164,15 +176,15 @@ export default function DiscussionPanel({
                   <AvatarFallback className="bg-[#565656]">U</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 pr-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-1 lg:flex-row lg:items-center justify-between">
                     <span className="text-white font-semibold text-sm">
                       Anonymous
                     </span>
-                    <span className="text-[#c8cdd1] text-xs">
+                    <span className="text-[#c8cdd1] text-xs text-[clamp(0.5rem,2vw,0.75rem)]">
                       {new Date(c.createdAt).toLocaleTimeString()}
                     </span>
                   </div>
-                  <p className="text-[#c8cdd1] text-sm mt-1 break-all">
+                  <p className="text-[#c8cdd1] text-sm mt-1 break-all text-[clamp(0.65rem,2.5vw,1rem)]">
                     {c.text}
                   </p>
                   <button
@@ -204,7 +216,7 @@ export default function DiscussionPanel({
                       rounded-md
                       px-3 py-2
                       text-white
-                      placeholder:text-[#c8cdd1]
+                      placeholder:text-gray-400
                       focus:outline-none focus:ring-2 focus:ring-[#19c0f4]
                       resize-none
                       text-sm
@@ -213,7 +225,7 @@ export default function DiscussionPanel({
                       max-h-[4.5rem]
                       leading-6
                     "
-                    placeholder="Write a reply…"
+                    placeholder="Reply…"
                   />
                   <span className="block text-left text-xs text-white/50">
                     {replyText.length}/250
@@ -226,7 +238,7 @@ export default function DiscussionPanel({
                       className="
                         text-[#19c0f4] bg-transparent border-[#19c0f4]
                         hover:bg-[#19c0f4] hover:text-white hover:border-[#19c0f4]
-                        rounded-md px-3 py-1 text-xs
+                        rounded-md px-3 py-1 text-xs mb-4
                       "
                     >
                       Reply
@@ -245,15 +257,15 @@ export default function DiscussionPanel({
                         <AvatarFallback className="bg-[#565656]">U</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 pr-16">
-                        <div className="flex items-center justify-between">
-                          <span className="text-white font-semibold text-sm">
+                        <div className="flex flex-col gap-1 lg:flex-row lg:items-center justify-between">
+                          <span className="text-white font-semibold text-sm text-[clamp(0.65rem,2.5vw,1rem)]">
                             Anonymous
                           </span>
-                          <span className="text-[#c8cdd1] text-xs">
+                          <span className="text-[#c8cdd1] text-xs text-[clamp(0.5rem,2vw,0.75rem)]">
                             {new Date(r.createdAt).toLocaleTimeString()}
                           </span>
                         </div>
-                        <p className="text-[#c8cdd1] text-sm mt-1 break-all">
+                        <p className="text-[#c8cdd1] text-sm mt-1 break-all text-[clamp(0.5rem,2vw,0.75rem)]">
                           {r.text}
                         </p>
                       </div>

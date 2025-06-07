@@ -55,49 +55,18 @@ export default function MoonexpressTradingInterface() {
   }, [commentText]);
 
   return (
-    <div className="mx-auto w-full max-w-screen-2xl px-6 lg:px-10">
+    <div className="mx-auto w-full max-w-screen-2xl px-6 lg:px-10 max-[480px]:px-0">
       <div className="grid gap-6 lg:gap-x-6 lg:gap-y-0 p-6 lg:[grid-template-columns:1fr_clamp(18rem,22vw,26rem)] items-start">
         {/* Main Content */}
-        <div className="lg:grid lg:[grid-template-rows:auto_1fr] flex flex-col gap-6">
+        <div className="lg:grid lg:[grid-template-rows:auto_1fr] flex flex-col gap-6 min-w-0">
           <div className="order-1 lg:order-none lg:row-start-1 lg:col-start-1 flex flex-col gap-6">
             {/* ─────── TOKEN INFO + CHART ─────── */}
             <Card className="bg-[#132043] border-[#21325e] rounded-xl">
               {/* ─── TOKEN HEADER ─── */}
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-4">
-                  <Avatar className="w-16 h-16">
-                    <AvatarImage src="/placeholder.svg?height=64&width=64" />
-                    <AvatarFallback className="bg-[#fac031] text-[#0b152f]">FB</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <h1 className="text-2xl font-bold text-white">Flappy Bird ($FBD)</h1>
-                  </div>
-                  <div className="grid grid-cols-3 gap-8 text-center">
-                    <div>
-                      <div className="text-[#c8cdd1] text-sm">Symbol</div>
-                      <div className="text-white font-semibold">$FBD</div>
-                    </div>
-                    <div>
-                      <div className="text-[#c8cdd1] text-sm">Market cap</div>
-                      <div className="text-white font-semibold">4100.84</div>
-                    </div>
-                    <div>
-                      <div className="text-[#c8cdd1] text-sm">Replies</div>
-                      <div className="text-white font-semibold">07</div>
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
+              
 
               {/* ─── TOKEN DESCRIPTION + CHART ─── */}
               <CardContent className="space-y-6">
-                <p className="text-[#c8cdd1] text-sm leading-relaxed">
-                  Lorem Ipsum is simply dummy text of the printing and typesetting industry.
-                  Lorem Ipsum has been the industry's standard dummy text ever since the
-                  1500s, when an unknown printer took a galley of type and scrambled it to
-                  make a type specimen book. It has survived not only five centuries.
-                </p>
-
                 {/* CHART HEADER  –– removed border-t to kill the grey line */}
                 <div className="flex items-center justify-between pt-6">
                   <div className="flex items-center gap-4">
@@ -106,20 +75,6 @@ export default function MoonexpressTradingInterface() {
                       <span className="text-[#c8cdd1] text-sm">Price/MCap</span>
                       <span className="text-[#c8cdd1] text-sm">USD/SOL</span>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" className="text-[#c8cdd1]">
-                      Save
-                    </Button>
-                    <Button variant="ghost" size="icon" className="text-[#c8cdd1]">
-                      <Settings className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="text-[#c8cdd1]">
-                      <Download className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="text-[#c8cdd1]">
-                      <Upload className="w-4 h-4" />
-                    </Button>
                   </div>
                 </div>
 
@@ -174,7 +129,7 @@ export default function MoonexpressTradingInterface() {
                     }`}
                     onClick={() => setActiveTab("comments")}
                   >
-                    Discussion
+                    Discussion (0)
                   </button>
                   <button
                     className={`font-medium pb-2 transition-colors ${
@@ -210,7 +165,7 @@ export default function MoonexpressTradingInterface() {
           </Card>
         </div>
         
-        <div className="order-2 lg:order-none lg:row-start-1 lg:row-span-2 lg:col-start-2 flex flex-col gap-6">
+        <div className="order-2 lg:order-none lg:row-start-1 lg:row-span-2 lg:col-start-2 flex flex-col gap-6 min-w-0">
           {/* Trading Panel */}
           <div className="hidden lg:block">
             <TradingPanel initialTab={tradingTab} />
